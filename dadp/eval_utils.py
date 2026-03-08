@@ -131,8 +131,8 @@ def extract_and_save_embeddings(model, policy_dataset, checkpoint_path, batch_si
         print(f"\nExtracted {len(embeddings_data['embeddings'])} embeddings")
         return save_path
 
-def load_dataset_from_checkpoint_metadata(checkpoint_path, dataset_name_override=None):
-    """Load dataset using checkpoint metadata with optional dataset name override"""
+def load_dataset_from_checkpoint_metadata(checkpoint_path, dataset_name_override=None, state_mean_override=None, state_std_override=None):
+    """Load dataset using checkpoint metadata with optional overrides"""
     import json
     
     model, metadata = DADP.load_checkpoint(checkpoint_path, "cpu")
@@ -156,18 +156,30 @@ def load_dataset_from_checkpoint_metadata(checkpoint_path, dataset_name_override
     checkpoint_dir = os.path.dirname(checkpoint_path)
     config_path = os.path.join(checkpoint_dir, 'config.json')
     
-    if os.path.exists(config_path):
+    if state_mean_override is not None:
+        state_mean = np.array(state_mean_override, dtype=np.float32)
+        print(f"Using override state_mean shape: {state_mean.shape}")
+    elif os.path.exists(config_path):
         print(f"Loading config from: {config_path}")
         with open(config_path, 'r') as f:
             config = json.load(f)
             if 'state_mean' in config and config['state_mean'] is not None:
                 state_mean = np.array(config['state_mean'], dtype=np.float32)
                 print(f"Loaded state_mean shape: {state_mean.shape}")
+    else:
+        print(f"Config not found at: {config_path} for state_mean")
+
+    if state_std_override is not None:
+        state_std = np.array(state_std_override, dtype=np.float32)
+        print(f"Using override state_std shape: {state_std.shape}")
+    elif os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            config = json.load(f)
             if 'state_std' in config and config['state_std'] is not None:
                 state_std = np.array(config['state_std'], dtype=np.float32)
                 print(f"Loaded state_std shape: {state_std.shape}")
     else:
-        print(f"Config not found at: {config_path}")
+        print(f"Config not found at: {config_path} for state_std")
     
     # Get observation function
     observation_function = None

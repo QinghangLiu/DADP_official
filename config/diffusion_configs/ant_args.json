@@ -47,7 +47,7 @@
     "enable_wandb": true,
     "noise_type": "mixed_ddim",
     "predict_embedding": true,
-    "dadp_checkpoint_path": "./dadp/embedding/logs/ckpt/RandomAnt_28dynamics-v0",
+    "dadp_checkpoint_path": "./dadp/embedding/logs/ckpt/RandomAnt_28dynamics-v0/best_model.zip",
     "pipeline_type": "joint",
     "co_train_embedding": false,
     "embedding_learning_rate": null,

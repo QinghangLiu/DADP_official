@@ -3,66 +3,66 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - _libgcc_mutex=0.1
-  - _openmp_mutex=4.5
-  - bzip2=1.0.8
-  - ca-certificates=2025.8.3
-  - glew=2.1.0
-  - icu=75.1
-  - ld_impl_linux-64=2.44
-  - libdrm=2.4.125
-  - libexpat=2.7.1
-  - libffi=3.4.6
-  - libgcc=15.1.0
-  - libgcc-ng=15.1.0
-  - libglu=9.0.3
-  - libglvnd=1.7.0
-  - libgomp=15.1.0
-  - libiconv=1.18
-  - libllvm20=20.1.8
-  - liblzma=5.8.1
-  - libnsl=2.0.1
-  - libopengl=1.7.0
-  - libpciaccess=0.18
-  - libprotobuf=3.20.3
-  - libsqlite=3.50.4
-  - libstdcxx=15.1.0
-  - libstdcxx-ng=15.1.0
-  - libuuid=2.41.2
-  - libxcb=1.17.0
-  - libxcrypt=4.4.36
-  - libxkbcommon=1.11.0
-  - libxml2=2.15.0
-  - libxml2-16=2.15.0
-  - libzlib=1.3.1
-  - mesalib=25.0.5
-  - ncurses=6.5
-  - openssl=3.5.3
-  - pip=23.3.2
-  - protobuf=3.20.3
-  - pthread-stubs=0.4
-  - python=3.10.18
-  - python_abi=3.10
-  - readline=8.2
-  - setuptools=63.2.0
-  - six=1.17.0
-  - spirv-tools=2025.1
-  - tk=8.6.13
-  - wayland=1.24.0
-  - wheel=0.38.4
-  - xkeyboard-config=2.45
-  - xorg-libx11=1.8.12
-  - xorg-libxau=1.0.12
-  - xorg-libxcursor=1.2.3
-  - xorg-libxdmcp=1.1.5
-  - xorg-libxext=1.3.6
-  - xorg-libxfixes=6.0.1
-  - xorg-libxi=1.8.2
-  - xorg-libxinerama=1.1.5
-  - xorg-libxrandr=1.5.4
-  - xorg-libxrender=0.9.12
-  - xorg-libxshmfence=1.3.3
-  - zstd=1.5.7
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=2_gnu
+  - bzip2=1.0.8=hda65f42_8
+  - ca-certificates=2025.8.3=hbd8a1cb_0
+  - glew=2.1.0=h9c3ff4c_2
+  - icu=75.1=he02047a_0
+  - ld_impl_linux-64=2.44=ha97dd6f_2
+  - libdrm=2.4.125=hb03c661_1
+  - libexpat=2.7.1=hecca717_0
+  - libffi=3.4.6=h2dba641_1
+  - libgcc=15.1.0=h767d61c_5
+  - libgcc-ng=15.1.0=h69a702a_5
+  - libglu=9.0.3=h5888daf_1
+  - libglvnd=1.7.0=ha4b6fd6_2
+  - libgomp=15.1.0=h767d61c_5
+  - libiconv=1.18=h3b78370_2
+  - libllvm20=20.1.8=hf7376ad_1
+  - liblzma=5.8.1=hb9d3cd8_2
+  - libnsl=2.0.1=hb9d3cd8_1
+  - libopengl=1.7.0=ha4b6fd6_2
+  - libpciaccess=0.18=hb9d3cd8_0
+  - libprotobuf=3.20.3=h3eb15da_0
+  - libsqlite=3.50.4=h0c1763c_0
+  - libstdcxx=15.1.0=h8f9b012_5
+  - libstdcxx-ng=15.1.0=h4852527_5
+  - libuuid=2.41.2=he9a06e4_0
+  - libxcb=1.17.0=h8a09558_0
+  - libxcrypt=4.4.36=hd590300_1
+  - libxkbcommon=1.11.0=hca5e8e5_1
+  - libxml2=2.15.0=h26afc86_1
+  - libxml2-16=2.15.0=ha9997c6_1
+  - libzlib=1.3.1=hb9d3cd8_2
+  - mesalib=25.0.5=h57bcd07_2
+  - ncurses=6.5=h2d0b736_3
+  - openssl=3.5.3=h26f9b46_1
+  - pip=23.3.2=pyhd8ed1ab_0
+  - protobuf=3.20.3=py310heca2aa9_1
+  - pthread-stubs=0.4=hb9d3cd8_1002
+  - python=3.10.18=hd6af730_0_cpython
+  - python_abi=3.10=8_cp310
+  - readline=8.2=h8c095d6_2
+  - setuptools=63.2.0=py310hff52083_0
+  - six=1.17.0=pyhe01879c_1
+  - spirv-tools=2025.1=h84d6215_0
+  - tk=8.6.13=noxft_hd72426e_102
+  - wayland=1.24.0=h3e06ad9_0
+  - wheel=0.38.4=pyhd8ed1ab_0
+  - xkeyboard-config=2.45=hb9d3cd8_0
+  - xorg-libx11=1.8.12=h4f16b4b_0
+  - xorg-libxau=1.0.12=hb9d3cd8_0
+  - xorg-libxcursor=1.2.3=hb9d3cd8_0
+  - xorg-libxdmcp=1.1.5=hb9d3cd8_0
+  - xorg-libxext=1.3.6=hb9d3cd8_0
+  - xorg-libxfixes=6.0.1=hb9d3cd8_0
+  - xorg-libxi=1.8.2=hb9d3cd8_0
+  - xorg-libxinerama=1.1.5=h5888daf_1
+  - xorg-libxrandr=1.5.4=hb9d3cd8_0
+  - xorg-libxrender=0.9.12=hb9d3cd8_0
+  - xorg-libxshmfence=1.3.3=hb9d3cd8_0
+  - zstd=1.5.7=hb8e6e7a_2
   - pip:
       - absl-py==2.3.1
       - annotated-types==0.7.0
@@ -110,8 +110,6 @@ dependencies:
       - gym-notices==0.1.0
       - gymnasium==1.2.1
       - h5py==3.14.0
-      - hf-xet==1.1.10
-      - huggingface-hub==0.35.3
       - hydra-core==1.3.2
       - idna==3.10
       - imagecodecs==2025.3.30
@@ -130,7 +128,6 @@ dependencies:
       - llvmlite==0.42.0
       - logistro==2.0.1
       - lxml==6.0.2
-      - mamba-ssm==2.2.5
       - markdown-it-py==4.0.0
       - markupsafe==3.0.3
       - matplotlib==3.10.6
@@ -142,7 +139,6 @@ dependencies:
       - mujoco==3.1.6
       - mujoco-py==2.1.2.14
       - narwhals==2.6.0
-      - networkx==3.4.2
       - ninja==1.13.0
       - numba==0.59.1
       - numcodecs==0.13.1
@@ -177,8 +173,8 @@ dependencies:
       - opt-einsum==3.4.0
       - orjson==3.11.5
       - packaging==25.0
-      - pandas==2.3.3
       - pillow==11.3.0
+      - pip-autoremove==0.10.0
       - platformdirs==4.4.0
       - plotly==6.3.0
       - pluggy==1.6.0
@@ -201,15 +197,12 @@ dependencies:
       - python-dateutil==2.9.0.post0
       - pytz==2025.2
       - pyyaml==6.0.3
-      - regex==2025.9.18
       - requests==2.32.5
       - rich==14.1.0
       - rsa==4.9.1
-      - safetensors==0.6.2
       - scikit-image==0.22.0
       - scikit-learn==1.7.2
       - scipy==1.15.3
-      - seaborn==0.13.2
       - sentry-sdk==2.39.0
       - shapely==1.8.5.post1
       - shellingham==1.5.4
@@ -220,12 +213,10 @@ dependencies:
       - termcolor==3.1.0
       - threadpoolctl==3.6.0
       - tifffile==2025.5.10
-      - tokenizers==0.22.1
       - tomli==2.4.0
       - torch==2.8.0
       - torchvision==0.15.2
       - tqdm==4.67.1
-      - transformers==4.56.2
       - triton==3.4.0
       - typer==0.19.2
       - typing-extensions==4.15.0
@@ -236,4 +227,3 @@ dependencies:
       - wrapt==1.17.3
       - zarr==2.16.1
       - zipp==3.23.0
-prefix: /home/pengcheng/anaconda3/envs/dadp310

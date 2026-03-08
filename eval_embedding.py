@@ -39,6 +39,9 @@ def parse_args():
                         # default="RandomWalker2d/40dynamics-v2",
                         # default="RandomContinuousCartPoleHard/10dynamics-v1",
                         help="Override dataset name (if not provided, will use dataset from checkpoint metadata)")
+                        
+    parser.add_argument("--state_mean", type=float, nargs="+", default=None, help="State mean for normalization")
+    parser.add_argument("--state_std", type=float, nargs="+", default=None, help="State std for normalization")
     
     # Embedding extraction
     parser.add_argument("--extract_embeddings", action="store_true", default=True)
@@ -86,7 +89,7 @@ def validate_device(device_str: str) -> str:
     print(f"Using device: {device_str}")
     return device_str
 
-def load_checkpoint_and_dataset(checkpoint_path: str, device: str, dataset_name_override: Optional[str] = None):
+def load_checkpoint_and_dataset(checkpoint_path: str, device: str, dataset_name_override: Optional[str] = None, state_mean: Optional[List[float]] = None, state_std: Optional[List[float]] = None):
     """Load checkpoint and reconstruct dataset"""
     if not os.path.exists(checkpoint_path):
         raise FileNotFoundError(f"Checkpoint not found: {checkpoint_path}")
@@ -94,7 +97,7 @@ def load_checkpoint_and_dataset(checkpoint_path: str, device: str, dataset_name_
     print(f"Loading checkpoint: {checkpoint_path}")
     
     model, metadata, state_dim, action_dim, policy_dataset, dataset_params = load_dataset_from_checkpoint_metadata(
-        checkpoint_path, dataset_name_override=dataset_name_override
+        checkpoint_path, dataset_name_override=dataset_name_override, state_mean_override=state_mean, state_std_override=state_std
     )
     model = model.to(device)
     
@@ -282,7 +285,8 @@ def main():
     
     # Load model and dataset
     model, metadata, policy_dataset, dataset_params = load_checkpoint_and_dataset(
-        args.checkpoint_path, device, dataset_name_override=args.dataset_name
+        args.checkpoint_path, device, dataset_name_override=args.dataset_name,
+        state_mean=args.state_mean, state_std=args.state_std
     )
     
     # Create data loaders for evaluation
