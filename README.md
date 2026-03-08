@@ -15,14 +15,20 @@ conda activate dadp310
 
 *Note: Ensure you are running this on a machine with CUDA devices available.*
 
-### 2. Download Datasets and Pre-trained Models
+### 2. Configure MuJoCo
+
+Before proceeding, you must ensure that MuJoCo (mujoco210) is properly installed and configured on your system, as it is required by the environments. Follow the [official d4rl installation instructions](https://github.com/Farama-Foundation/D4RL#installation) or set up your `~/.mujoco/mujoco210` folder correctly and make sure your `LD_LIBRARY_PATH` includes the MuJoCo binaries.
+
+*Note: For many distributions, this looks like `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:~/.mujoco/mujoco210/bin`.*
+
+### 3. Download Datasets and Pre-trained Models
 
 Before training or evaluating, you need to download the required datasets and pre-trained models from Hugging Face:
 
 - **Models:** [https://huggingface.co/qinghangliu/DADP](https://huggingface.co/qinghangliu/DADP)
 - **Datasets:** [https://huggingface.co/datasets/qinghangliu/DADP](https://huggingface.co/datasets/qinghangliu/DADP)
 
-Once you have downloaded the datasets, extract and move them into your local Minari datasets directory (`~/.minari/datasets/`). The expected folder structure should look like this:
+Once you have downloaded the datasets, extract and move them into your local Minari datasets directory. If you are using Minari for the first time, you may need to manually create this folder path (`mkdir -p ~/.minari/datasets/`). The expected directory structure should look like this:
 
 ```text
 ~/.minari/
@@ -33,9 +39,25 @@ Once you have downloaded the datasets, extract and move them into your local Min
     └── ...
 ```
 
-For the pre-trained models, place the downloaded checkpoints inside the `./dadp/embedding/logs/ckpt/` directory within this repository.
 
-### 3. Training Models
+
+
+For the pre-trained models, place the downloaded checkpoints inside the `./dadp/embedding/logs/ckpt/` directory within this repository. The expected folder structure should look like this:
+
+```text
+DomainAdaptiveDiffusionPolicy/
+└── dadp/
+    └── embedding/
+        └── logs/
+            └── ckpt/
+                ├── Adroit_door_shrink_combined-v0/
+                │   └── best_model.zip
+                ├── RandomAnt_28dynamics-v0/
+                │   └── best_model.zip
+                └── ...
+```
+
+### 4. Training Models
 
 This repository provides single-run bash scripts located in the `scripts/` directory to streamline training.
 
