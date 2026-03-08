@@ -1,0 +1,81 @@
+{
+
+  "history": 16,
+  "dataset_horizon": 20,
+  "stride": 1,
+  "max_path_length": 1016,
+  "planner_temperature": 1,
+  "planner_target_return": 1,
+  "planner_w_cfg": 1.0,
+
+  "project": "dadp",
+  "group": "20251015",
+
+  "save_dir": "/home/qinghang/DomainAdaptiveDiffusionPolicy/multi_seed_runs/clean_up_ckpt/",
+  "attention_mask": false,
+  "eval_interval": 20000,
+  "guidance_type": "MCSS",
+  "planner_net": "transformer",
+  "policy_net": "dadp",
+  "rebase_policy": false,
+  "seed": 0,
+
+  "terminal_penalty": 0,
+  "full_traj_bonus": 0,
+  "discount": 0.997,
+  "domain": [5.05, 2.575, 2.575, 5.05, 7.525, 5.05, 2.575, 0.55, 0.55, 0.775, 0.325, 0.77, 1.55],
+
+  "planner_solver": "ddim",
+  "planner_emb_dim": 256,
+  "planner_d_model": 256,
+  "planner_depth": 6,
+  "planner_sampling_steps": 5,
+  "planner_predict_noise": true,
+  "planner_next_obs_loss_weight": 1,
+  "planner_ema_rate": 0.9999,
+  
+  "unet_dim": 32,
+  "use_weighted_regression": 1,
+  "weight_factor": 2,
+
+  "policy_solver": "ddim",
+  "policy_hidden_dim": 256,
+  "policy_diffusion_steps": 10,
+  "policy_sampling_steps": 20,
+  "policy_predict_noise": true,
+  "policy_guide_noise_scale": 0.01,
+  "policy_ema_rate": 0.995,
+  "policy_learning_rate": 0.0003,
+  "critic_learning_rate": 0.0003,
+
+  "use_diffusion_invdyn": 1,
+  "invdyn_gradient_steps": 200000,
+  "policy_diffusion_gradient_steps": 1000000,
+  "planner_diffusion_gradient_steps": 100000,
+  "critic_gradient_steps": 200000,
+  "batch_size": 256,
+  "log_interval": 1000,
+  "save_interval": 10,
+
+
+
+  "planner_num_candidates": 50,
+  "planner_ckpt": "best_model",
+  "critic_ckpt": 200000,
+  "policy_ckpt": 1000000,
+  "invdyn_ckpt": 200000,
+  "planner_use_ema": true,
+  "policy_temperature": 0.5,
+  "policy_use_ema": true,
+  "plot": false,
+  "video_save_path": "./video",
+  "value_type": "ev",
+  "value_mode": "current",
+
+  "training_task_ids": [
+   3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27
+  ],
+  "test_task_ids": [
+    2
+  ]
+}

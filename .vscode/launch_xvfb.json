@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Debug eval under Xvfb",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/run_eval_xvfb.sh",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": false,
+      "subProcess": true,
+      "args": [
+        "${workspaceFolder}/eval_diffusion_meta_dt_style.py",
+        "--env_type", "walker",
+        "--num_eval_episodes", "5",
+        "--plot", "True"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  ]
+}

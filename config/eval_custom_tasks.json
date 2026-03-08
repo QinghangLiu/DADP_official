@@ -1,0 +1,40 @@
+{
+  "env_name": "RandomHalfCheetah-v0",
+  "dataset": "RandomHalfCheetah/82dynamics-v7",
+  "dadp_checkpoint": "./dadp/embedding/logs/transformer/exp_halfcheetah_28/best_model.zip",
+  "device": "cuda:0",
+  "num_envs": 10,
+  "num_episodes": 5,
+  "planner_horizon": 20,
+  "noise_type": "mixed_ddim",
+  "pipeline_type": "joint",
+  "condition": false,
+  "enable_wandb": false,
+  "plot": true,
+  "models": [
+    {
+      "name": "model1_baseline",
+      "planner_ckpt": "./best_model/RandomHalfCheetah-v0/joint_mixed_ddim_exp_halfcheetah_28_1/planner_500000.pt",
+      "pipeline_name": "exp_halfcheetah_28_1",
+      "description": "Baseline model trained on 28 dynamics"
+    },
+    {
+      "name": "model2_improved",
+      "planner_ckpt": "./best_model/RandomHalfCheetah-v0/joint_mixed_ddim_exp_halfcheetah_28_2/planner_500000.pt",
+      "pipeline_name": "exp_halfcheetah_28_2",
+      "description": "Improved architecture variant"
+    },
+    {
+      "name": "model3_finetuned",
+      "planner_ckpt": "./best_model/RandomHalfCheetah-v0/joint_mixed_ddim_exp_halfcheetah_28_3/planner_500000.pt",
+      "pipeline_name": "exp_halfcheetah_28_3",
+      "description": "Finetuned with additional data"
+    },
+    {
+      "name": "model4_ablation",
+      "planner_ckpt": "./best_model/RandomHalfCheetah-v0/joint_mixed_ddim_exp_halfcheetah_28_4/planner_500000.pt",
+      "pipeline_name": "exp_halfcheetah_28_4",
+      "description": "Ablation study variant"
+    }
+  ]
+}

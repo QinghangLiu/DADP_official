@@ -1,0 +1,10 @@
+{
+  "env_name": "door",
+  "dataset_name": "Adroit/door_shrink_combined-v0",
+  "embedding_size": 67,
+  "train_task_ids": [0, 1],
+  "test_task_ids": [2],
+  "log_dir": "./dadp/embedding/logs/transformer/exp_door_3",
+  "state_mean": null,
+  "state_std": null
+}
