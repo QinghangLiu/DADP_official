@@ -100,6 +100,12 @@ bash scripts/extract_embedding.sh ant --gpu 0
 
 # Example: Extract embedding for a specific checkpoint
 bash scripts/extract_embedding.sh ant --gpu 0 --checkpoint path/to/your/best_model.zip
-``` 
+```
 
+---
 
+## Notice on Manipulation Datasets
+
+The manipulation datasets (Door, Relocate) used in this work are sourced from the [ODRL (Off-Dynamics RL)](https://github.com/OffDynamicsRL/off-dynamics-rl) project. Please note that these datasets have **near-random quality** and are **very small in size**, making it difficult to learn generalizable representations or policies from them.
+
+For future research directions, we recommend building upon the **locomotion environments** (Ant, Walker2d, HalfCheetah, Hopper), where DADP provides a complete data generation pipeline with higher-quality and larger-scale datasets.
