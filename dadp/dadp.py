@@ -79,8 +79,8 @@ class TrainingConfig:
     # Loss weights
     inverse_loss_weight: float = 1.0
     forward_loss_weight: float = 1.0
-    intra_traj_consistency_loss_weight: float = 0.1  # 原来的consistency loss，轨迹内一致性
-    inter_traj_consistency_loss_weight: float = 0.1  # 新的轨迹间一致性损失
+    intra_traj_consistency_loss_weight: float = 0.1
+    inter_traj_consistency_loss_weight: float = 0.1
     state_loss_weight: float = 0.5
     factor_loss_weight: float = 1.0
     policy_loss_weight: float = 1.0  # Add policy loss weight
@@ -104,7 +104,7 @@ class TrainingConfig:
     use_observation: bool = False
     
     # Cross-prediction option
-    cross_prediction: bool = False  # 是否启用交叉预测
+    cross_prediction: bool = False
     
     # Embedding detach parameters
     detach_embedding_for_factor: bool = False
@@ -374,8 +374,8 @@ class DADP(nn.Module):
             'total_loss': total_loss,
             'losses': combined_losses,
             'num_sub_batches': processed_batch1['current_sub_batch_size'] + processed_batch2['current_sub_batch_size'],
-            'embedding1': embedding1,  # 返回embedding1以备后续使用
-            'embedding2': embedding2   # 返回embedding2以备后续使用
+            'embedding1': embedding1,
+            'embedding2': embedding2
         }
 
     def evaluate(self, test_loader: DataLoader, epoch: int, wandb: Optional[object] = None):
@@ -640,11 +640,9 @@ class DADP(nn.Module):
             print(f"Epoch: {metadata.get('epoch', 'Unknown')}")
             
             return model, metadata
-            
+
         finally:
             for temp_path in [temp_model_path, temp_optimizer_path]:
                 if os.path.exists(temp_path):
                     os.remove(temp_path)
-
-
 

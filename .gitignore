@@ -60,3 +60,6 @@ veteran_random_mujoco.py
 multi_seed_runs/
 PAPERPLOTS/
 fail_variant/
+
+
+CLEANUP_SUMMARY.md

@@ -1,5 +1,4 @@
 import os
-import re
 import minari
 import torch
 import random
@@ -18,19 +17,17 @@ from utils.pipelines_utils import (
 )
 import wandb, uuid
 from cleandiffuser.dataset.dataset_utils import create_splited_dataloader
-from cleandiffuser.dataset.d4rl_mujoco_dataset import  RandomMuJoCoSeqDataset, EmbeddingMuJoCoSeqDataset,get_task_data
+from cleandiffuser.dataset.d4rl_mujoco_dataset import EmbeddingMuJoCoSeqDataset, get_task_data
 from diffusionmodel import Planner, DecisionMaker
 from dadp.dadp import DADP
 import argparse
 from customwrappers.RandomVecEnv import RandomSubprocVecEnv
-from stable_baselines3.common.env_util import make_vec_env 
+from stable_baselines3.common.env_util import make_vec_env
 import imageio
 import time
 import numpy as np
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 import json
-
-
 
 def pipeline(args):
     args.device = args.device if torch.cuda.is_available() else "cpu"
@@ -54,7 +51,7 @@ def pipeline(args):
     set_seed(args.seed)
 
 
-    save_path,video_path = make_save_path(args)
+    save_path, video_path = make_save_path(args)
 
     dataset = minari.load_dataset(f"{args.task.dataset}")
 
@@ -82,10 +79,8 @@ def pipeline(args):
         stride=args.task.stride, center_mapping=(args.guidance_type!="cfg"),
         terminal_penalty=args.terminal_penalty,max_path_length=args.task.max_path_length,
         full_traj_bonus=args.full_traj_bonus,padding=max_history, 
-        save_embedding_path=os.path.join(os.path.dirname(args.dadp_checkpoint_path), "embeddings_data.npz",
-                                            ),
-            # task_id=np.array(range(244)),
-        )
+        save_embedding_path=os.path.join(os.path.dirname(args.dadp_checkpoint_path), "embeddings_data.npz"),
+    )
 
     obs_dim, act_dim = planner_dataset.o_dim, planner_dataset.a_dim
     training_ids = getattr(args, 'training_task_ids', None)
@@ -109,7 +104,8 @@ def pipeline(args):
     dl_generator.manual_seed(args.seed)
 
     planner_dataloader, planner_val_dataloader = create_splited_dataloader(
-        training_planner_dataset, batch_size=args.batch_size, shuffle=True, num_workers=4, drop_last=True)
+        training_planner_dataset, batch_size=args.batch_size, shuffle=True, num_workers=4, drop_last=True
+    )
     test_task_dataloader = DataLoader(
         test_task_dataset,
         batch_size=args.batch_size,
@@ -119,11 +115,7 @@ def pipeline(args):
         worker_init_fn=_seed_worker,
         generator=dl_generator,
     )
-    # test_batch = next(iter(test_task_dataloader))
-
     # ---------------------- Create Model Classes ----------------------
-    # Create Planner Model
-
     planner_model = Planner(
         obs_dim=obs_dim,
         act_dim=act_dim,
@@ -149,10 +141,7 @@ def pipeline(args):
         train_embedding_model=co_train_embeddings,
         embedding_learning_rate=args.embedding_learning_rate,
         predict_embedding=args.predict_embedding,
-
-        )
-
-
+    )
 
     # ---------------------- Training ----------------------
     if args.mode == "train":
@@ -196,10 +185,7 @@ def pipeline(args):
         
     if args.mode in ["inference", "test"]:
         planner_model.load(args.planner_ckpt)
-        # loss = planner_model.validate(test_task_dataloader, evaluate_batch=1000)
-        # print(f"Planner Validation Loss: {loss}")
 
-        #evaluate on env
         decision_maker = DecisionMaker(
             obs_dim=obs_dim,
             act_dim=act_dim,
@@ -359,19 +345,13 @@ def pipeline(args):
                             embedding_traj_arg = torch.stack(
                                 [random.choice(precollected_pool) for _ in range(args.num_envs)], dim=0
                             )
-                        # elif t < history_length and all(h is not None for h in previous_episode_history):
-                        #     embedding_traj_arg = torch.stack([
-                        #         h for h in previous_episode_history if h is not None
-                        #     ], dim=0)
-
                         actions = decision_maker.predict(
                             obs_history=obs_history_tensor,
                             cnt_obs=current_obs,
                             num_candidates=1,
                             task_id=task_idx,
-                            embedding_traj=embedding_traj_arg if embedding_traj_arg is not None else None,
+                            embedding_traj=embedding_traj_arg,
                         )
-
 
                     actions = actions.clamp(-1, 1)
                     obs_history.append(torch.cat([current_obs, actions], dim=-1))
@@ -423,9 +403,8 @@ def pipeline(args):
                     if episode > 15 and t % 50 == 0:
                         active_envs = int(np.sum(1 - cum_done))
                         print(f'  [Episode {episode+1}, t={t}] Active envs: {active_envs}/{args.num_envs},success rate: {episode_success_flags}', end='\r')
-                        #if succeed, print reward
                     if np.any(episode_success_flags):
-                            print(f'  [Episode {episode+1}, t={t}],success rate: {episode_success_flags}, reward: {np.around(ep_reward, 2)}', end='\r')
+                        print(f'  [Episode {episode+1}, t={t}],success rate: {episode_success_flags}, reward: {np.around(ep_reward, 2)}', end='\r')
 
                 episode_rewards.append(ep_reward)
                 episode_success_rates.append(float(np.mean(episode_success_flags)))
@@ -445,7 +424,6 @@ def pipeline(args):
                     frames = []  # Clear frames to save memory
                 os.makedirs(os.path.dirname(embedding_file), exist_ok=True)
                 decision_maker.planner.save_embedding(embedding_file)
-
 
                 obs_history_tensor_end = torch.stack(obs_history, dim=1)
                 for i in range(args.num_envs):
@@ -492,9 +470,6 @@ if __name__ == "__main__":
         else:
             raise argparse.ArgumentTypeError('Boolean value expected.')
 
-    #check dataset, env, device, pipeline_type, pipeline_name
-    #rectify save path when pipeline name is changed
-    # All arguments in one parser
     parser = argparse.ArgumentParser()
     # Task arguments
     parser.add_argument('--env_name', type=str, default="RandomHalfCheetah-v0", help='Environment name')
@@ -504,15 +479,14 @@ if __name__ == "__main__":
     parser.add_argument('--pipeline_name', default="exp_halfcheetah_28_test", type=str, help='Pipeline name')
     parser.add_argument('--name', default="exp_halfcheetah_28", type=str, help='Name for wandb logging')
     parser.add_argument('--mode', default="train", type=str, help='Mode: train/inference/test/etc')
-    default_eval_tasks = [
-                3,4,5]
+    default_eval_tasks = [3, 4, 5]
     parser.add_argument(
         '--eval_task_ids',
         default=default_eval_tasks,
         type=lambda s: [int(item) for item in s.split(',') if item.strip()],
         help='Comma-separated list of task IDs to evaluate (e.g., "0,3,6,9"). Defaults to curated list if omitted.'
     )
-    parser.add_argument('--customize_task', default =False, help='Use a custom generated task instead of task from task list')
+    parser.add_argument('--customize_task', default=False, help='Use a custom generated task instead of task from task list')
     parser.add_argument(
         '--custom_task_file',
         default=None,

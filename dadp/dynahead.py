@@ -23,7 +23,7 @@ class DynamicsHead(nn.Module):
         self.factor_dim = factor_dim
         self.embedding_size = embedding_size
         
-        # 创建 Transformer 序列编码器
+        # Create Transformer sequence encoder
         encoder_kwargs = encoder_kwargs or {}
         self.seq_encoder = create_seq_to_embedding(
             model_type="transformer",
@@ -32,7 +32,7 @@ class DynamicsHead(nn.Module):
             **encoder_kwargs
         )
 
-        # 创建预测头 - 简化网络结构，统一使用相同的架构
+        # Create prediction heads
         def create_head(input_dim: int, output_dim: int):
             return nn.Sequential(
                 nn.Linear(input_dim, head_hidden),
@@ -61,10 +61,8 @@ class DynamicsHead(nn.Module):
 
     # Encode the history to embedding
     def encode_history(self, states_hist: torch.Tensor, actions_hist: torch.Tensor, 
-                      attention_mask=None, use_random_mask=False, 
-                      min_visible_length=2) -> torch.Tensor:  
-        # print(f"states_hist: {states_hist[0]}")
-        # print(f"actions_hist: {actions_hist[0]}")      
+                      attention_mask=None, use_random_mask=False,
+                      min_visible_length=2) -> torch.Tensor:
         return self.seq_encoder(states_hist, actions_hist,
                                attention_mask=attention_mask,
                                use_random_mask=use_random_mask, 
@@ -99,9 +97,8 @@ class DynamicsHead(nn.Module):
 
     def pred_factor(self, embedding: torch.Tensor):
         return self.factor_head(embedding)
-    
-    
-    # 简化损失函数 - 统一使用MSE
+
+    # Loss functions (all MSE)
     @staticmethod
     def inverse_loss(pred_action: torch.Tensor, target_action: torch.Tensor) -> torch.Tensor:
         return F.mse_loss(pred_action, target_action)
@@ -135,5 +132,5 @@ class DynamicsHead(nn.Module):
 
     @staticmethod
     def inter_traj_consistency_loss(embedding1: torch.Tensor, embedding2: torch.Tensor) -> torch.Tensor:
-        """Inter-trajectory consistency loss: 直接计算两个embedding之间的MSE"""
+        """Inter-trajectory consistency loss between two embeddings"""
         return F.mse_loss(embedding1, embedding2)

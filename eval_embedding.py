@@ -2,66 +2,41 @@ import torch
 import argparse
 import os
 import numpy as np
-from typing import Dict, List, Tuple, Optional
-from tqdm import tqdm
-from dadp.dadp import DADP
-from dadp.train_utils import (
-    get_dataset, 
-    create_data_loaders_from_dataset,
-    seed_everything,
-
-)
+from typing import List, Optional
+from dadp.train_utils import seed_everything
 from dadp.eval_utils import (
     extract_and_save_embeddings,
     load_embeddings_data,
     load_dataset_from_checkpoint_metadata,
-
 )
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser(description="Evaluate Trained DADP Model")
     # Core arguments
-    parser.add_argument("--checkpoint_path", type=str, 
-                        # default="./dadp/embedding/logs/cleanup/40dynamics_v2/transformer/256_cross_01_01/checkpoints/epoch_0001_final.zip",
-                        default="/home/pengcheng/DomainAdaptiveDiffusionPolicy/dadp/embedding/logs/exp/RandomHopper_82dynamics-v7/transformer/20251215_145213/best_model.zip",
-                        
+    parser.add_argument("--checkpoint_path", type=str,
+                        default="./dadp/embedding/logs/exp/best_model.zip",
                         help="Path to checkpoint file")
     parser.add_argument("--batch_size", type=int, default=256, help="Batch size")
     parser.add_argument("--device", type=str, default='cuda:1', help="Device")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     
     # Dataset override
-    parser.add_argument("--dataset_name", type=str, 
+    parser.add_argument("--dataset_name", type=str,
                         default="RandomHopper/28dynamics-v0",
-                        # default="RandomWalker2d/40dynamics-v2",
-                        # default="RandomContinuousCartPoleHard/10dynamics-v1",
                         help="Override dataset name (if not provided, will use dataset from checkpoint metadata)")
-                        
     parser.add_argument("--state_mean", type=float, nargs="+", default=None, help="State mean for normalization")
     parser.add_argument("--state_std", type=float, nargs="+", default=None, help="State std for normalization")
     
     # Embedding extraction
     parser.add_argument("--extract_embeddings", action="store_true", default=True)
-    parser.add_argument("--embeddings_path", type=str, 
+    parser.add_argument("--embeddings_path", type=str,
                         default=None,
-                        # default="/home/qinghang/DomainAdaptiveDiffusionPolicy/dadp/embedding/logs/transformer/exp_ant_28_reproduce/embeddings_data.npz",
-                        # default="/home/qinghang/DomainAdaptiveDiffusionPolicy/dadp/embedding/logs/transformer/exp_walker_28(2)_dt1/embeddings_data.npz", # 
-                        # default="/home/pengcheng/DomainAdaptiveDiffusionPolicy/dadp/embedding/logs/cleanup/transformer/20251015_231418/23.npz", # 
-                        # default="/home/pengcheng/DomainAdaptiveDiffusionPolicy/dadp/embedding/logs/cleanup/transformer/20251015_235102/256.npz",
-                        # default = "/home/pengcheng/DomainAdaptiveDiffusionPolicy/dadp/embedding/logs/cleanup/transformer/20251016_131954/embeddings_data.npz",
                         help="Path to precomputed embeddings (skip extraction if provided)")
     
     # Task filtering
-    parser.add_argument("--task_ids", type=int, nargs="+", 
-                        # default=None, 
-                        # default=[0, 1, 2,  3,  4,  5,  6,  7,  8,  9, 
-                        #         10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 
-                        #         20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 
-                        #         30, 31, 32, 33, 34, 35, 36, 37, 38, 39,],
-                        default=[i for i in range(28)],
+    parser.add_argument("--task_ids", type=int, nargs="+",
+                        default=list(range(28)),
                         help="Specific task IDs to evaluate")
     
     # Visualization
@@ -305,72 +280,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # args = parse_args()
-    # from dadp.visualization.vis_utils import create_single_task_visualization_with_additional_data_rollouts
-
-    # additional_data_specs = [
-    #     {
-    #         "label": "Mixed DDIM",
-    #         "path": "/home/qinghang/DomainAdaptiveDiffusionPolicy/results/exp_walker_28(2)_mixedddim_H20_Jump1_History16_next1_MCSS_transformer_d6_width256_joint_dp1_penalty0_bonus0_gamma0.997_adv1_weight2_guide0.1_noisemixed_ddim/RandomWalker2d-v0/RandomWalker2d/28dynamics-v9/task_9_episode_1_embeddings.npy"
-    #     },
-    #     {
-    #         "label": "DADP (Ours)",
-    #         "path": "/home/qinghang/DomainAdaptiveDiffusionPolicy/results/exp_walker_28(2)_predict_mixddim_long_horizon_H20_Jump1_History16_next1_MCSS_transformer_d6_width256_joint_dp1_penalty0_bonus0_gamma0.997_adv1_weight2_guide0.1_noisemixed_ddim/RandomWalker2d-v0/RandomWalker2d/28dynamics-v9/task_9_episode_3_embeddings.npy",
-    #     },
-    #     {
-    #         "label": "Conditional",
-    #         "path": "/home/qinghang/DomainAdaptiveDiffusionPolicy/results/exp_walker_28(2)_condition_H20_Jump1_History16_next1_MCSS_transformer_d6_width256_joint_dp1_penalty0_bonus0_gamma0.997_adv1_weight2_guide0_noisestandard/RandomWalker2d-v0/RandomWalker2d/28dynamics-v9/task_9_episode_3_embeddings.npy",
-    #     },
-
-
-    # ]
-
-    # additional_datasets = []
-    # for spec in additional_data_specs:
-    #     data_path = spec["path"]
-    #     if not os.path.exists(data_path):
-    #         raise FileNotFoundError(f"Additional data file not found: {data_path}")
-    #     data = np.load(data_path).astype(np.float64)
-    #     additional_datasets.append({"label": spec["label"], "data": data})
-
-    # fig = create_single_task_visualization_with_additional_data_rollouts(
-    #     embeddings_data_path=args.embeddings_path,
-    #     target_task_ids=list(range(3,28)),
-    #     additional_data=additional_datasets,
-    #     save_path="/home/qinghang/DomainAdaptiveDiffusionPolicy/visualizations/embedding_rollouts/exp_halfcheetah_task0_epi3_2d.html",
-    #     max_points_per_dataset=1000,
-    #     show_spheres=False,
-    #     show_points=True,
-    #     method="tsne",
-    #     n_components=2
-    # )
-
-    # data_array_path = [
-    #     './results/new model20251022_H20_Jump1_History16_next1_MCSS_transformer_d6_width256_joint_dp1_penalty0_bonus0_gamma0.997_adv1_weight2_guide0.01_noiseembedding_guided/RandomWalker2d-v0/RandomWalker2d/40dynamics-v2/5planner_embeddings_with_denoise_history0.npy',
-    #     './results/new model20251022_H20_Jump1_History16_next1_MCSS_transformer_d6_width256_joint_dp1_penalty0_bonus0_gamma0.997_adv1_weight2_guide0.01_noiseembedding_guided/RandomWalker2d-v0/RandomWalker2d/40dynamics-v2/20planner_embeddings_with_denoise_history0.npy',
-    #     './results/new model20251022_H20_Jump1_History16_next1_MCSS_transformer_d6_width256_joint_dp1_penalty0_bonus0_gamma0.997_adv1_weight2_guide0.01_noiseembedding_guided/RandomWalker2d-v0/RandomWalker2d/40dynamics-v2/23planner_embeddings_with_denoise_history2.npy',
-    #     './results/new model20251022_H20_Jump1_History16_next1_MCSS_transformer_d6_width256_joint_dp1_penalty0_bonus0_gamma0.997_adv1_weight2_guide0.01_noiseembedding_guided/RandomWalker2d-v0/RandomWalker2d/40dynamics-v2/32planner_embeddings_with_denoise_history0.npy',
-    # ]
-    # data_list = []
-    # for path in data_array_path:
-    #     data = np.load(path)  # Shape: (n_samples, embedding_dim)
-    #     if data.shape[0] ==1000:
-    #         data = data[16:]
-    #     data = data.squeeze()
-    #     data_list.append(data)
-
-    # data_arr = np.stack(data_list, axis=0)  # Shape: (n_tasks, n_samples, embedding_dim)
-    # print(f"big_arr shape: {data_arr.shape}")
-
-    
-    # from dadp.visualization.vis_utils import visualize_denoise_evolution_tsne_by_timestep
-    # figs = visualize_denoise_evolution_tsne_by_timestep(
-    #     task_data=data_arr[:,:,:,16:,:],  # shape [n_tasks, T, K, H, D]
-    #     task_ids=list(range(data_arr.shape[0])),
-    #     denoise_steps_to_plot=[0, 5, 10, 15, 20],
-    #     tsne_params={"perplexity": 30, "n_iter": 1000, "learning_rate": 200, "random_state": 42},
-    #     sample_timesteps_per_task=1500,
-    #     save_dir="./visualizations/tsne_denoise_by_timestep3d_only_future_state",
-    #     n_components=3,
-    # )
     

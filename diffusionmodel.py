@@ -53,20 +53,8 @@ class DecisionMaker:
                 embedding_learning_rate: float = None,
                     ):
     
-        planner_dim = obs_dim + act_dim
-        self.pipeline_type = pipeline_type
         if pipeline_type == "separate":
             raise ValueError("Policy/critic are disabled; use pipeline_type='joint' or 'no_prior'.")
-        self.history = history
-        self.planner_horizon = planner_horizon
-        self.obs_dim = obs_dim
-        self.act_dim = act_dim
-        self.model_path = model_path
-        self.predict_embedding = (
-            predict_embedding if predict_embedding is not None else noise_type in ("mixed_ddim", "one_step_mixed_ddim")
-        )
-
-        # Store essential parameters
         self.pipeline_type = pipeline_type
         self.history = history
         self.planner_horizon = planner_horizon
@@ -74,6 +62,9 @@ class DecisionMaker:
         self.act_dim = act_dim
         self.model_path = model_path
         self.device = device
+        self.predict_embedding = (
+            predict_embedding if predict_embedding is not None else noise_type in ("mixed_ddim", "one_step_mixed_ddim")
+        )
         embedding_model, metadata = DADP.load_checkpoint(embedding_model_path, "cpu")
         embedding_model = embedding_model.to(device)
         self.embedding_model = embedding_model
@@ -120,7 +111,6 @@ class DecisionMaker:
             embedding_learning_rate=embedding_learning_rate,
             predict_embedding=self.predict_embedding
         )
-
 
     def train(
         self,
@@ -240,30 +230,14 @@ class DecisionMaker:
                 task_id=task_id
             )
         
-        # future_trajs shape: (num_candidates * B, future_horizon, obs_dim)
-        # Get next observation (first step of future trajectory)
-
-        
-        # value = self.critic.predict(future_trajs)
-        # value = value.view(cnt_obs.shape[0], num_candidates)
-        # idx = torch.argmax(value, -1)
-        # future_trajs = future_trajs.reshape(cnt_obs.shape[0], num_candidates, self.planner_horizon-self.history-1, self.obs_dim)
-        # future_trajs = future_trajs[torch.arange(cnt_obs.shape[0]), idx]
-            
-        
-        
-        # print(f'next_obs {next_obs_plan}')
-        
-        # Use policy to predict action given current obs and chosen next obs
-        # policy.predict(history_traj, cnt_obs, next_obs, n_samples, task_id)
         actions = future_trajs[:, 0, self.obs_dim:]
-        
         return actions
+
     def validate(self, val_dataloader, evaluate_batch=100):
         """Validate all components and return metrics."""
         n_batch = 0
         self.eval()
-        val_metrics = {'planner_loss': 0.0,  'total_loss': 0}
+        val_metrics = {'planner_loss': 0.0, 'total_loss': 0}
         with torch.no_grad():
             val_iterator = iter(val_dataloader)
             for batch_idx in range(min(evaluate_batch, len(val_dataloader))):
@@ -276,10 +250,6 @@ class DecisionMaker:
                     batch["task_id"].to(self.device) 
                     if "task_id" in batch else None
                 )
-                
-                # planner_prior[:, args.task.history:, obs_dim:] = planner_horizon_data[:, args.task.history:, obs_dim:]
-                obs_repeat = planner_horizon_obs[:,self.history,:]
-                
                 # Sample from planner
                 sampled_traj = self.planner.predict(
                     planner_horizon_obs_action[:,:self.history,:],
@@ -415,142 +385,7 @@ class Planner:
         self.env_type = env_type    
         self.env_quality = env_quality
         self.dataset = planner_dataset
-    # def evaluate_on_env(self,
-    #                                env_type: str,
-    #                                data_quality: str = 'expert',
-    #                                task_ids=None,
-    #                                num_eval_episodes: int = 5,
-    #                                max_path_length: int = None,
-    #                                history: int = None,
-    #                                device: str = None,
-    #                                model_path: str = None):
-    #     """
-    #     Planner-only evaluation that creates the environment using the same helper
-    #     used in `eval_diffusion_meta_dt_style.py` and runs episodes using only
-    #     `self.predict` to generate planner outputs. This function does not plot,
-    #     does not validate the env, and does not depend on DecisionMaker.
 
-    #     Note: this method expects the planner's `predict` to produce an output that
-    #     contains action information (either an obs+act joint output where actions
-    #     are in the trailing dims, or a direct action vector). If the planner
-    #     returns only next-observations (and not actions), the method will raise
-    #     an informative error.
-    #     """
-    #     # use planner defaults when arguments are not provided
-    #     if history is None:
-    #         history = self.history
-    #     if device is None:
-    #         device = self.device
-    #     if model_path is None:
-    #         model_path = self.model_path
-
-    #     # helpers are imported at module top; use them directly
-
-    #     # build env using same convention as eval script
-    #     config = get_default_config(env_type)
-    #     env = create_env(env_type, data_quality)
-    #     # set max path length from config if not provided
-    #     if max_path_length is None:
-    #         max_path_length = config.get('max_episode_steps', 200)
-
-    #     # decide tasks
-    #     if task_ids is None:
-    #         if hasattr(env, 'tasks'):
-    #             task_ids = list(range(len(env.tasks)))
-    #         else:
-    #             task_ids = [0]
-
-    #     results = {}
-
-    #     for task_idx in task_ids:
-    #         # set task (assume correct API as in eval_diffusion_meta_dt_style.py)
-    #         if hasattr(env, 'reset_task'):
-    #             env.reset_task(task_idx)
-
-    #         episode_rewards = []
-    #         previous_episode_history = None
-    #         for ep in range(num_eval_episodes):
-    #             state = env.reset()
-    #             if isinstance(state, tuple):
-    #                 state = state[0]
-
-    #             t = 0
-    #             done = False
-    #             ep_reward = 0.0
-
-    #             # initialize history
-    #             obs_history = []
-    #             for _ in range(history):
-    #                 obs_tensor = torch.tensor(state, device=device, dtype=torch.float32).unsqueeze(0)
-    #                 obs_history.append(torch.cat([
-    #                     obs_tensor,
-    #                     torch.zeros((1, self.act_dim), device=device),
-    #                     torch.zeros((1, 1), device=device)
-    #                 ], dim=-1))
-
-    #             while not done and t < max_path_length:
-    #                 cnt_obs = torch.tensor(state, device=device, dtype=torch.float32).unsqueeze(0)
-
-    #                 obs_history_tensor = torch.stack(obs_history, dim=1)
-    #                 with torch.no_grad():
-    #                     # Use previous episode history for early timesteps
-    #                     if t < history and previous_episode_history is not None:
-    #                         actions = self.predict(
-    #                             history_traj=obs_history_tensor,
-    #                             cnt_obs=cnt_obs,
-    #                             n_samples=cnt_obs.shape[0],
-    #                             task_id=None,
-    #                         )[:,0,self.obs_dim:self.obs_dim+self.act_dim]
-    #                     else:
-    #                         actions = self.predict(
-    #                             history_traj=obs_history_tensor,
-    #                             cnt_obs=cnt_obs,
-    #                             n_samples=cnt_obs.shape[0],
-    #                             task_id=None,
-    #                         )[:,0,self.obs_dim:self.obs_dim+self.act_dim]
-    #                 # step env
-
-    #                 actions = actions.clamp(-1, 1)
-    #                 # Update obs_history
-                    
-    #                 if len(obs_history) > history:
-    #                     obs_history.pop(0)
-                    
-    #                 # Convert to numpy
-    #                 action_np = actions.squeeze(0).cpu().numpy()
-    #                 step_result = env.step(action_np)
-                    
-    #                 next_state = step_result[0]
-    #                 r = step_result[1]
-    #                 done = step_result[2]
-
-
-    #                 ep_reward += float(r)
-    #                 t += 1
-    #                 reward = torch.tensor(r,
-    #                     device=device,
-    #                     dtype=torch.float32
-    #                 ).unsqueeze(0).unsqueeze(0)  # [1, 1]
-    #                 obs_history.append(torch.cat([cnt_obs, actions,reward], dim=-1))
-    #                 # update history
-
-    #                 if len(obs_history) > history:
-    #                     obs_history.pop(0)
-
-    #                 state = next_state
-
-    #             episode_rewards.append(ep_reward)
-    #         # Store episode history for next episode
-    #         obs_history_tensor_end = torch.stack(obs_history, dim=1)
-    #         previous_episode_history = obs_history_tensor_end[0].detach()  # [history, obs_dim+act_dim]
-    #         arr = np.array(episode_rewards)
-    #         results[task_idx] = {
-    #             'mean_reward': float(arr.mean()) if arr.size else 0.0,
-    #             'std_error': float(arr.std() / np.sqrt(arr.size)) if arr.size else 0.0,
-    #             'episode_rewards': arr.tolist()
-    #         }
-
-    #     return results
     def evaluate_on_env(self,
                                    env_type: str,
                                    data_quality: str = 'expert',
@@ -621,7 +456,6 @@ class Planner:
             for ep in range(num_eval_episodes):
                 # vectorized reset
                 obs = env_eval.reset()
-                # reward = 0
                 t = 0
                 cum_done = np.zeros(num_envs, dtype=bool)
                 ep_reward = np.zeros(num_envs, dtype=float)
@@ -631,7 +465,6 @@ class Planner:
                     torch.cat([
                         torch.tensor(normalizer.normalize(obs), device=device, dtype=torch.float32),
                         torch.zeros((num_envs, self.act_dim), device=device),
-                        # torch.zeros((num_envs, 1), device=device)
                     ], dim=-1)
                     for _ in range(max_history)
                 ]
@@ -666,13 +499,7 @@ class Planner:
                     # Step environment (vectorized)
                     obs, rew, done, info = env_eval.step(actions_np)
 
-                    # Build reward tensor shaped (num_envs, 1) to concatenate with histories
-                    # reward_tensor = torch.tensor(rew, device=device, dtype=torch.float32).unsqueeze(-1)
-
-                    # Append new (obs, action, reward) to history
-                    obs_history.append(torch.cat([current_obs, actions, 
-                                                #   reward_tensor
-                                                  ], dim=-1))
+                    obs_history.append(torch.cat([current_obs, actions], dim=-1))
                     if len(obs_history) > max_history:
                         obs_history.pop(0)
 
@@ -705,11 +532,9 @@ class Planner:
             std_error = float(np.std(episode_rewards) / np.sqrt(len(episode_rewards))) if episode_rewards.size else 0.0
 
             results[task_idx] = {
-                # 'task_params': task.tolist() if isinstance(task, np.ndarray) else task,
                 'mean_reward': mean_reward,
                 'std_error': std_error,
                 'episode_rewards': episode_rewards.tolist(),
-                # 'num_episodes': len(episode_rewards)
             }
 
         env_eval.close()
@@ -863,8 +688,7 @@ class Planner:
         planner_horizon_obs_action = torch.cat(
             [planner_horizon_obs, planner_horizon_action], dim=-1
         )
-        
-        
+
         if self.pipeline_type == "separate":
             planner_horizon_data = planner_horizon_obs_action.clone()
             planner_horizon_data[:, self.history:, self.obs_dim:] = 0
@@ -882,21 +706,8 @@ class Planner:
             if "task_id" in batch else None
         )
         planner_embedding = batch['embedding'].to(self.device) if ('embedding' in batch and not self.train_embedding_model) else None
-        # planner_embedding_generated = self.get_embedding(
-        #     planner_horizon_obs_action,
-        #     detach = not self.train_embedding_model,
-        # )
-        
-        # planner_latent = batch['latent'].to(self.device) if 'latent' in batch else None
-        planner_dim = self.obs_dim + self.act_dim if self.pipeline_type != "separate" else self.obs_dim
-        expected_dim = self.obs_dim + self.act_dim
+
         if planner_embedding is not None:
-            # emb_dim = planner_embedding.shape[-1]
-            # if emb_dim != expected_dim:
-            #     if emb_dim > expected_dim:
-            #         planner_embedding = planner_embedding[..., :expected_dim]
-            #     else:
-            #         pad_width = expected_dim - emb_dim
             #         planner_embedding = torch.nn.functional.pad(planner_embedding, (0, pad_width), mode='constant', value=0.0)
             if self.planner_noise_type == 'latent_embedding_guided':
                 planner_embedding = planner_embedding.unsqueeze(1).repeat(1, self.planner_horizon * 2, 1)
@@ -911,17 +722,6 @@ class Planner:
                 embedding_traj,
                 detach=not self.train_embedding_model,
             ).to(self.device)
-
-        # if (
-        #     planner_embedding is not None
-        #     and planner_embedding.shape == planner_embedding_generated.shape
-        # ):
-        #     embedding_mse = F.mse_loss(planner_embedding, planner_embedding_generated).item()
-        #     if embedding_mse > 1e-6:
-        #         raise ValueError(
-        #             f"Provided planner embeddings do not match generated embeddings (MSE={embedding_mse:.6e})"
-        #         )
-        # Update planner
 
         weighted_regression_tensor = torch.exp(
             (planner_td_val - 1) * weight_factor
@@ -945,22 +745,17 @@ class Planner:
             condition=condition_tensor,
             task_id=planner_task,
             embedding=embedding_tensor,
-            # latent=planner_latent if self.planner_noise_type == 'latent_embedding_guided' else None,
-
         )['loss']
 
         if self.train_embedding_model:
             self.embedding_optimizer.step()
-        
-        
+
         return planner_loss
     
-    def validate(self, val_dataloader, evaluate_batch=100,enable_wandb=False, n_gradient_step=0):
+    def validate(self, val_dataloader, evaluate_batch=100, enable_wandb=False, n_gradient_step=0):
         """Single validation step for planner."""
         self.planner.eval()
-        planner_loss = 0.0
         n_batch = 0
-        planner_dim = self.obs_dim + self.act_dim
         val_metrics = {
             'planner_loss': 0.0,
             'action_loss': 0.0,
@@ -977,21 +772,12 @@ class Planner:
 
                 planner_horizon_obs = batch["obs"]["state"].to(self.device)
                 planner_horizon_action = batch["act"].to(self.device)
-                # planner_horizon_rewards = batch["rew"].to(self.device)
-                planner_horizon_obs_action = torch.cat([planner_horizon_obs, planner_horizon_action
-                                                        # ,planner_horizon_rewards
-                                                        ], dim=-1)
-                
+                planner_horizon_obs_action = torch.cat([planner_horizon_obs, planner_horizon_action], dim=-1)
 
                 planner_task = (
                     batch["task_id"].to(self.device) 
                     if "task_id" in batch else None
                 )
-                
-
-                # planner_prior[:, args.task.history:, obs_dim:] = planner_horizon_data[:, args.task.history:, obs_dim:]
-                obs_repeat = planner_horizon_obs[:,max_history,:]
-                
                 # Sample from planner
                 sampled_traj = self.predict(
                     planner_horizon_obs_action[:,:max_history,:],
@@ -999,8 +785,6 @@ class Planner:
                     n_samples=planner_horizon_obs.shape[0],
                     task_id=planner_task if self.planner_noise_type == 'env_factor_guided' else None,
                 )
-                # groundtruth_latent = self.planner._encode_trajectory(planner_horizon_obs_action)
-                # latent_loss = F.mse_loss(latent, groundtruth_latent)
                 if self.pipeline_type == "separate":
                     gt_length = sampled_traj.shape[1]
                     loss = F.mse_loss(sampled_traj, planner_horizon_obs[:,max_history+1:max_history+1+gt_length,:])
@@ -1020,14 +804,13 @@ class Planner:
             
             
             return val_metrics
-    def get_embedding(self, history_traj, project = False, detach: bool = True):
+    def get_embedding(self, history_traj, project=False, detach: bool = True):
         """Get embedding from model."""
         grad_context = torch.enable_grad if not detach else torch.no_grad
         with grad_context():
-            # Ensure we only use the last embedding_history steps
             history_traj = history_traj[:, -self.embedding_history:, :]
-            obs_history = history_traj[:,:,:self.obs_dim]
-            action_history = history_traj[:,:,self.obs_dim:self.obs_dim+self.act_dim]
+            obs_history = history_traj[:, :, :self.obs_dim]
+            action_history = history_traj[:, :, self.obs_dim:self.obs_dim+self.act_dim]
             embedding = self.embedding_model.dynamics.encode_history(
                 obs_history,
                 action_history,
@@ -1035,16 +818,6 @@ class Planner:
             if detach:
                 embedding = embedding.detach()
 
-        # If encoder output does not match obs+act dims, pad or truncate to restore expected size
-        # expected_dim = self.obs_dim + self.act_dim
-        # emb_dim = embedding.shape[-1]
-        # if emb_dim != expected_dim:
-        #     if emb_dim > expected_dim:
-        #         embedding = embedding[..., :expected_dim]
-        #     else:
-        #         pad_width = expected_dim - emb_dim
-        #         embedding = torch.nn.functional.pad(embedding, (0, pad_width), mode='constant', value=0.0)
-                
         if self.planner_noise_type == 'latent_embedding_guided':
             embedding = embedding.unsqueeze(1).repeat(1,self.planner_horizon*2,1)
         else:
@@ -1068,7 +841,6 @@ class Planner:
                                             embedding_traj,
                                             detach=not self.train_embedding_model
                                         ).to(self.device)
-        # self.embedding_list.append(planner_embedding[:,0,:].detach().cpu().numpy())
         sampled_traj, _ = self.planner.sample(
                 planner_prior,
                 solver="ddim",
@@ -1108,8 +880,7 @@ class Planner:
                             detach=not self.train_embedding_model
                             ).to(self.device)
 
-        # self.embedding_list.append(planner_embedding[:,0,:].detach().cpu().numpy())
-        sampled_traj,  log = self.planner.sample(
+        sampled_traj, log = self.planner.sample(
                 planner_prior,
                 solver="ddim",
                 n_samples=n_samples,
@@ -1120,9 +891,7 @@ class Planner:
                 temperature=1.0,
                 task_id=task_id,
                 embedding=planner_embedding if self.planner_noise_type in ['embedding_guided','latent_embedding_guided','mixed_ddim','one_step_mixed_ddim'] else None,
-                # preserve_history=True
             )
-        # self.embedding_list.append(log['sample_history'][0])
         if self.pipeline_type == "no_prior":
             return sampled_traj
         elif self.pipeline_type == "separate":
@@ -1170,7 +939,6 @@ class Planner:
     
     def save(self, step):
         """Save planner checkpoint."""
-        # self.planner.save(os.path.join(self.model_path, f"planner_ckpt_{step}.pt"))
         self.planner.save(os.path.join(self.model_path, "planner_ckpt_latest.pt"))
         if self.train_embedding_model:
             metadata = {"step": step}

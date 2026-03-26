@@ -31,15 +31,13 @@ def extract_embeddings_from_dataset(model, policy_dataset, batch_size=128, devic
     all_embeddings = []
     all_task_ids = []
     history = model.training_config.history
-    
+
     with torch.no_grad():
         for batch in tqdm(full_loader, desc="Processing batches"):
-            # 使用与训练时相同的数据选择逻辑
             if model.training_config.use_observation and "observation" in batch["obs"]:
                 states = batch["obs"]["observation"].to(device, non_blocking=True)
             else:
                 states = batch["obs"]["state"].to(device, non_blocking=True)
-            rewards = batch["rew"].to(device, non_blocking=True)
             actions = batch["act"].to(device, non_blocking=True)
             task_ids = batch.get("task_id", None)
             
@@ -51,34 +49,30 @@ def extract_embeddings_from_dataset(model, policy_dataset, batch_size=128, devic
             # Extract history
             state_history = states[:, :history, :]
             action_history = actions[:, :history, :]
-            # reward_history = rewards[:, :history]
-            # Get embeddings
-            embeddings = model.dynamics.encode_history(state_history, action_history
-                                                    #    , reward_history
-                                                       )
+            embeddings = model.dynamics.encode_history(state_history, action_history)
             
             all_embeddings.append(embeddings.cpu().numpy())
             
-            # Store task IDs - 修复维度处理问题
+            # Store task IDs
             if task_ids is not None:
                 task_ids_np = task_ids.cpu().numpy()
                 # 确保task_ids是正确的形状
-                if task_ids_np.ndim == 0:  # 标量
+                if task_ids_np.ndim == 0:
                     task_ids_np = np.array([task_ids_np] * B)
-                elif task_ids_np.ndim == 1 and len(task_ids_np) == 1:  # 单元素数组
+                elif task_ids_np.ndim == 1 and len(task_ids_np) == 1:
                     task_ids_np = np.array([task_ids_np[0]] * B)
-                elif task_ids_np.ndim > 1:  # 多维数组，压扁
+                elif task_ids_np.ndim > 1:
                     task_ids_np = task_ids_np.flatten()
                     if len(task_ids_np) == 1:
                         task_ids_np = np.array([task_ids_np[0]] * B)
                 
-                # 确保长度匹配batch_size
+                # Ensure length matches batch_size
                 if len(task_ids_np) != B:
-                    # 如果长度不匹配，使用第一个值填充
+                    # Pad with first value if length doesn't match
                     first_val = task_ids_np[0] if len(task_ids_np) > 0 else 0
                     task_ids_np = np.array([first_val] * B)
                 
-                # 确保是整数类型
+                # Ensure integer type
                 task_ids_np = task_ids_np.astype(int)
                 all_task_ids.append(task_ids_np)
             else:
@@ -87,7 +81,7 @@ def extract_embeddings_from_dataset(model, policy_dataset, batch_size=128, devic
     all_embeddings = np.concatenate(all_embeddings, axis=0)
     all_task_ids = np.concatenate(all_task_ids, axis=0)
     
-    # 确保task_ids是整数类型且形状正确
+    # Ensure task_ids are integers with correct shape
     all_task_ids = all_task_ids.astype(int).flatten()
     
     print(f"Extracted {len(all_embeddings)} embeddings, shape: {all_embeddings.shape}")
@@ -147,7 +141,7 @@ def load_dataset_from_checkpoint_metadata(checkpoint_path, dataset_name_override
     
     training_config = model.training_config
     
-    # Calculate horizon - 与训练时一致
+    # Calculate horizon from training config
     horizon = metadata.get('training_config').get('history')
     
     # Load normalization parameters from config.json in checkpoint directory
@@ -180,14 +174,14 @@ def load_dataset_from_checkpoint_metadata(checkpoint_path, dataset_name_override
                 print(f"Loaded state_std shape: {state_std.shape}")
     else:
         print(f"Config not found at: {config_path} for state_std")
-    
+
     # Get observation function
     observation_function = None
     observation_kwargs = None
     if training_config.use_observation:
         obs_func_name = metadata.get('observation_function')
         obs_kwargs = metadata.get('observation_kwargs')
-        
+
         if obs_func_name and obs_kwargs:
             from cleandiffuser.dataset.d4rl_mujoco_dataset import add_gaussian_noise, mask_dimensions
             if obs_func_name == "gaussian_noise":
@@ -196,9 +190,7 @@ def load_dataset_from_checkpoint_metadata(checkpoint_path, dataset_name_override
             elif obs_func_name == "mask_dimensions":
                 observation_function = mask_dimensions
                 observation_kwargs = obs_kwargs
-    
 
-    
     # Load dataset
     from .train_utils import get_dataset
     state_dim, action_dim, policy_dataset = get_dataset(
@@ -255,14 +247,13 @@ def load_dataset_from_checkpoint_metadata_horizon(checkpoint_path, dataset_name_
     else:
         print(f"Config not found at: {config_path}")
 
-    
     # Get observation function
     observation_function = None
     observation_kwargs = None
     if training_config.use_observation:
         obs_func_name = metadata.get('observation_function')
         obs_kwargs = metadata.get('observation_kwargs')
-        
+
         if obs_func_name and obs_kwargs:
             from cleandiffuser.dataset.d4rl_mujoco_dataset import add_gaussian_noise, mask_dimensions
             if obs_func_name == "gaussian_noise":
@@ -271,7 +262,7 @@ def load_dataset_from_checkpoint_metadata_horizon(checkpoint_path, dataset_name_
             elif obs_func_name == "mask_dimensions":
                 observation_function = mask_dimensions
                 observation_kwargs = obs_kwargs
-    
+
     # Load dataset
     from .train_utils import get_dataset
     state_dim, action_dim, policy_dataset = get_dataset(
@@ -294,7 +285,7 @@ def load_dataset_from_checkpoint_metadata_horizon(checkpoint_path, dataset_name_
     return model, metadata, state_dim, action_dim, policy_dataset, dataset_params
 
 def visualize_tsne_embeddings(embeddings_data, save_dir, max_points_per_task=1000):
-    """t-SNE embedding visualization and save as HTML, 每个任务最多采样 max_points_per_task 个点"""
+    """t-SNE embedding visualization and save as HTML, sampling up to max_points_per_task per task"""
     try:
         from sklearn.manifold import TSNE
         import plotly.express as px
@@ -304,12 +295,12 @@ def visualize_tsne_embeddings(embeddings_data, save_dir, max_points_per_task=100
 
     X = embeddings_data['embeddings']
     task_ids = embeddings_data['task_ids']
-    # 按task_ids排序
+    # Sort by task_ids
     sort_idx = np.argsort(task_ids)
     X = X[sort_idx]
     task_ids = task_ids[sort_idx]
 
-    # 按任务分组采样
+    # Sample per task
     unique_task_ids = np.unique(task_ids)
     sampled_X = []
     sampled_task_ids = []
@@ -318,7 +309,6 @@ def visualize_tsne_embeddings(embeddings_data, save_dir, max_points_per_task=100
         X_tid = X[mask]
         n = len(X_tid)
         if n > max_points_per_task:
-            # idx = np.random.choice(n, max_points_per_task, replace=False)
             idx = np.linspace(0, n-1, max_points_per_task, dtype=int)
             idx = np.sort(idx)
             X_tid = X_tid[idx]

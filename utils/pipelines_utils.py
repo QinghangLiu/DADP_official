@@ -19,7 +19,7 @@ def parse_cfg(cfg_path: str) -> OmegaConf:
     base = OmegaConf.load(cfg_path)
     cli = OmegaConf.from_cli()
     for k,v in cli.items():
-        if v == None:
+        if v is None:
             cli[k] = True
     base.merge_with(cli)
     return base
@@ -144,12 +144,10 @@ def make_save_path(args):
     save_path = f"{args.save_dir}/" + base_path
     video_path = "video_outputs/" + base_path
     
-    if os.path.exists(save_path) is False:
-        os.makedirs(save_path)
-    
-    if os.path.exists(video_path) is False:
-        os.makedirs(video_path)
+    os.makedirs(save_path, exist_ok=True)
+    os.makedirs(video_path, exist_ok=True)
     return save_path, video_path
+
 def save_cfg(args, save_path):
       # Save args to save_path
     args_save_path = os.path.join(save_path, 'args.json')
@@ -480,10 +478,3 @@ class Logger:
             print(f"Failed to save model: {e}")
         if self._wandb:
             self._wandb.finish()
-
-
-    
-    
-
-
-    

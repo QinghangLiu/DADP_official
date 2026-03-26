@@ -78,7 +78,7 @@ class LearnablePositionalEmbedding(nn.Module):
         """
         batch_size, seq_len, d_model = x.shape
 
-        # 验证输入维度符合初始化时的 d_model
+        # Validate input dimensions符合初始化时的 d_model
         assert d_model == self.d_model, f"Input d_model {d_model} != expected {self.d_model}"
         # 验证序列长度不超过最大支持长度
         assert seq_len <= self.max_seq_len, f"Sequence length {seq_len} > max {self.max_seq_len}"
@@ -202,14 +202,13 @@ class TransformerEmbedding(EmbeddingBase):
             nn.Linear(d_model * 2, d_model)
         )
         
-        # 恢复原来的action encoder
         self.action_encoder = nn.Sequential(
             nn.Linear(action_dim, d_model * 2), nn.ReLU(),
             nn.Linear(d_model * 2, d_model * 2), nn.ReLU(),
             nn.Linear(d_model * 2, d_model)
         )
         
-        # 使用可学习位置编码
+        # Learnable positional encoding
         self.pos_embedding = LearnablePositionalEmbedding(
             d_model=d_model, max_seq_len=pos_encoding_max_len * 2
         )
@@ -245,8 +244,7 @@ class TransformerEmbedding(EmbeddingBase):
     def get_pooling_attention_weights(self):
         return self.adaptive_pooling.get_attention_weights()
     
-    
-    # 恢复原来的build_tokens，移除rewards参数
+
     def build_tokens(self, states: torch.Tensor, actions: torch.Tensor) -> torch.Tensor:
         """
         将状态和动作编码并构造交替排列的 token 序列。
@@ -261,7 +259,7 @@ class TransformerEmbedding(EmbeddingBase):
         state_tokens = self.state_encoder(states)
         action_tokens = self.action_encoder(actions)
 
-        # 创建一个空的 tokens 张量并把状态/动作交替放入
+        # Interleave state and action tokens
         tokens = torch.zeros(B, 2*L, self.d_model, device=states.device, dtype=states.dtype)
         tokens[:, 0::2, :] = state_tokens
         tokens[:, 1::2, :] = action_tokens
@@ -274,63 +272,15 @@ class TransformerEmbedding(EmbeddingBase):
             tokens: Input tokens [B, seq_len, d_model]
             attention_mask: Optional mask [B, seq_len] where True means ignore
         """
-        # 验证输入维度
+        # Validate input dimensions
         batch_size, seq_len, d_model = tokens.shape
         assert d_model == self.d_model, f"Token dimension {d_model} != expected {self.d_model}"
         
-        # 应用可学习位置编码
-        h = self.pos_embedding(tokens)  # (batch_size, seq_len, d_model)
+        h = self.pos_embedding(tokens)
         assert h.shape == tokens.shape, f"Positional embedding changed shape from {tokens.shape} to {h.shape}"
-        # import hashlib
-        # cpu_state = torch.random.get_rng_state()
-        # cpu_hash = hashlib.sha256(cpu_state.numpy().tobytes()).hexdigest()
-        # if torch.cuda.is_available():
-        #     cuda_state = torch.cuda.get_rng_state()
-        #     cuda_hash = hashlib.sha256(cuda_state.cpu().numpy().tobytes()).hexdigest()
-        # else:
-        #     cuda_hash = "n/a"
-        # print(f"[DADP_DEBUG_ENCODER] PRE-DROPOUT rng_cpu={cpu_hash} rng_cuda={cuda_hash}")
-        
+
         h = self.dropout(h)
-   
-        # cpu_state = torch.random.get_rng_state()
-        # cpu_hash = hashlib.sha256(cpu_state.numpy().tobytes()).hexdigest()
-        # if torch.cuda.is_available():
-        #     cuda_state = torch.cuda.get_rng_state()
-        #     cuda_hash = hashlib.sha256(cuda_state.cpu().numpy().tobytes()).hexdigest()
-        # else:
-        #     cuda_hash = "n/a"
-        # print(f"[DADP_DEBUG_ENCODER] rng_cpu={cpu_hash} rng_cuda={cuda_hash}")
-        # self._debug_rng_printed = True
-        # try:
-        #     matmul_precision = torch.get_float32_matmul_precision()
-        # except Exception:
-        #     matmul_precision = "unknown"
-        # print(
-        #     "[DADP_DEBUG_ENCODER] "
-        #     f"training={self.training} dtype={h.dtype} device={h.device} "
-        #     f"matmul_precision={matmul_precision}"
-        # )
-        # self._debug_printed = True
-        # import os 
-        # import hashlib
-        # max_params_env = os.getenv("DADP_DEBUG_ENCODER_WEIGHTS_MAX", "0")
-        # try:
-        #     max_params = int(max_params_env)
-        # except Exception:
-        #     max_params = 0
-        # print("[DADP_DEBUG_ENCODER] encoder parameter hashes")
-        # count = 0
-        # for name, param in self.named_parameters():
-        #     data = param.detach().cpu().numpy()
-        #     data = data.tobytes(order="C")
-        #     digest = hashlib.sha256(data).hexdigest()
-        #     print(f"  {name}: {digest}")
-        #     count += 1
-        #     if max_params > 0 and count >= max_params:
-        #         break
-        # print(f"[DADP_DEBUG_ENCODER] param_count={count}")
-        # self._debug_weights_printed = True
+
         # Apply transformer with optional attention mask
         h = self.transformer_encoder(h, src_key_padding_mask=attention_mask)  # (batch_size, seq_len, d_model)
         
@@ -340,8 +290,7 @@ class TransformerEmbedding(EmbeddingBase):
         
         return embedding
     
-    # 恢复原来的forward，移除rewards参数
-    def forward(self, states: torch.Tensor, actions: torch.Tensor, 
+    def forward(self, states: torch.Tensor, actions: torch.Tensor,
                attention_mask: Optional[torch.Tensor] = None,
                use_random_mask: bool = False, 
                min_visible_length: int = 2) -> torch.Tensor:

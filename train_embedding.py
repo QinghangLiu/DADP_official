@@ -17,82 +17,25 @@ from dadp.train_utils import (
     get_observation_function_and_kwargs
 )
 
-BIAS = 2 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+BIAS = 2
 
 def parse_args():
     """Parse command line arguments"""
     parser = argparse.ArgumentParser()
     parser.add_argument("--wandb_project", type=str, default="walker27")
-    
-    # Task parameters
-    # parser.add_argument("--dataset_name", type=str, default="RandomWalker2d/40dynamics-v2")
-    # parser.add_argument("--dataset_name", type=str, default="RandomWalker2d/229dynamics-v1")
-    # parser.add_argument("--dataset_name", type=str, default="RandomWalker2d/244dynamics-v3")
-    # parser.add_argument("--dataset_name", type=str, default="RandomContinuousCartPoleHard/10dynamics-v1")
-    
-    # parser.add_argument("--dataset_name", type=str, default="Walker/walker_expert-v0")
-    # parser.add_argument("--dataset_name", type=str, default="Hopper/hopper_expert-v0")
-    
-    
-    # parser.add_argument("--dataset_name", type=str, default="AntDir/antdir_expert-v0")
-    # parser.add_argument("--dataset_name", type=str, default="HalfCheetahDir/halfcheetahdir_expert-v0")
-    # parser.add_argument("--dataset_name", type=str, default="HalfCheetahVel/halfcheetahvel_expert-v0")
-    # parser.add_argument("--dataset_name", type=str, default="AntDir/antdir_expert-v0")
-    
-    
-    # parser.add_argument("--dataset_name", type=str, default="RandomSwimmer/82dynamics-v4")
-    # parser.add_argument("--dataset_name", type=str, default="RandomHalfCheetah/82dynamics-v4") # 23
-    
-    
-    # parser.add_argument("--dataset_name", type=str, default="RandomContinuousInvertedCartPoleHard/82dynamics-v6") # 6=5+1
-    
-    # parser.add_argument("--dataset_name", type=str, default="RandomWalker2d/82dynamics-v6") # 23
-    
-    
-    
-    # parser.add_argument("--dataset_name", type=str, default="RandomWalker2d/28dynamics-v9")
-    
-    
-    
-    # parser.add_argument("--dataset_name", type=str, default="Adroit/hammer_broken_combined-v0")
-    # parser.add_argument("--dataset_name", type=str, default="Adroit/door_shrink_combined-v0") #67
-    
-    
-    parser.add_argument("--dataset_name", type=str, default="RandomWalker2d/28dynamics-v0") # 23
-    # parser.add_argument("--dataset_name", type=str, default="RandomHopper/82dynamics-v7") # 14 = 11+3
-    # parser.add_argument("--dataset_name", type=str, default="RandomWalker2d/82dynamics-v7") # 23
-    # parser.add_argument("--dataset_name", type=str, default="Adroit/relocate_broken_combined-v0") # 35
-    
-    
-    parser.add_argument("--train_task_ids", type=int, nargs="+", 
-                        default=[
 
+    # Task parameters
+    parser.add_argument("--dataset_name", type=str, default="RandomWalker2d/28dynamics-v0")
+    parser.add_argument("--pair_dataset", action="store_true", default=True)
+    parser.add_argument("--train_task_ids", type=int, nargs="+",
+                        default=[
                             3,  4,  5,  6,  7,  8,  9,
                             10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                            20, 21, 22, 23, 24, 
+                            20, 21, 22, 23, 24,
                             25, 26, 27,
-                        #     28, 29, 
-                        #     30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
-                        #     40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
-                        #     50, 51, 52, 53, 54, 55, 56, 57, 58, 59,
-                        #     60, 61, 62, 63, 64, 65, 66, 67, 68, 69,
-                        #     70, 71, 72, 73, 74, 75, 76, 77, 78, 79,
-                        #     80, 81,
-                            ],
-                        # default=[
-                        #     # 0,  1,  2,  
-                                   
-                        #     ],
-                        
-                        
-                        )
-    parser.add_argument("--test_task_ids", type=int, nargs="+", 
-                        # default=[0,  1,  2,  3,  4]
-                        default=[0,  1,  2]
-                        # default=[2]
-                        # default=[2]
-                        )
+                        ])
+    parser.add_argument("--test_task_ids", type=int, nargs="+",
+                        default=[0, 1, 2])
     parser.add_argument("--use_observation", action="store_true", default=False)
     parser.add_argument("--observation_function", type=str, default="mask_dimensions", choices=["gaussian_noise", "mask_dimensions", None])
     parser.add_argument("--observation_noise_std", type=float, default=0.1)
@@ -172,10 +115,9 @@ def main():
     else:
         device = args.device
     print(f"Using device: {device}")
-    
+
     # Create log directory
-    import os.path as path
-    log_dir = path.join(args.log_dir, args.dataset_name.replace("/", "_"))
+    log_dir = os.path.join(args.log_dir, args.dataset_name.replace("/", "_"))
     log_dir = create_log_directory(log_dir)
 
     # Get observation function and kwargs
@@ -204,7 +146,7 @@ def main():
     else:
         print("Using raw state data for training")
     
-    # Get dataset and dimension information - 直接创建配对数据集
+    # Get dataset and dimension information
     state_dim, action_dim, policy_dataset = get_dataset(
         dataset_name=args.dataset_name,
         horizon=args.history + args.window_size + BIAS + args.delta_t - 1 - 1,
@@ -215,7 +157,7 @@ def main():
         state_std=state_std
     )
 
-    # 自动推断train_task_ids
+    # Auto-infer train_task_ids
     all_task_ids = list(range(len(policy_dataset.task_list)))
     test_task_ids = args.test_task_ids
     train_task_ids = args.train_task_ids
@@ -281,7 +223,7 @@ def main():
     
     save_config(args, log_dir, additional_info)
     
-    # Create data loaders (只用train_task_ids和test_task_ids)
+    # Create data loaders
     train_loader, test_loader = create_data_loaders_from_dataset(
         policy_dataset=policy_dataset,
         batch_size=args.batch_size,

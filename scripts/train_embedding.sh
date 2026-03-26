@@ -111,7 +111,7 @@ readarray -t state_mean_arr < <(jq -r 'if .state_mean then .state_mean[] else em
 readarray -t state_std_arr < <(jq -r 'if .state_std then .state_std[] else empty end' "${CONFIG}")
 
 common_args=(
-  --wandb_project walker27
+  --wandb_project DADP
   --observation_function mask_dimensions
   --observation_noise_std 0.1
   --observation_mask_dims 0 1

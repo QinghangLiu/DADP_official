@@ -136,10 +136,8 @@ def create_planner(obs_dim: int,
             noise_schedule="linear",
         )
     elif planner_noise_type == 'embedding_guided':
-        # planner = MixedDDIM(
         planner = EmbeddingGuidedDiffusionSDE(
-            
-            nn_diffusion_planner, 
+            nn_diffusion_planner,
             nn_condition=nn_condition_planner,
             fix_mask=fix_mask, 
             loss_weight=loss_weight, 
@@ -161,9 +159,7 @@ def create_planner(obs_dim: int,
             noise_schedule="linear",
             guide_noise_scale=planner_guide_noise_scale,
             predict_embedding=predict_embedding,
-            # task=planner_dataset.task_list,
         )
-
     else:
         raise ValueError(f"Unknown planner_type: {planner_noise_type}")
     

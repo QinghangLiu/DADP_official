@@ -54,7 +54,7 @@ def get_dataset(dataset_name, horizon, stride=1,
     
     dataset = minari.load_dataset(dataset_name)
     
-    # 直接创建配对数据集
+    # Create paired dataset
     from cleandiffuser.dataset.d4rl_mujoco_dataset import PairRandomMuJoCoSeqDataset
     
     if pair_dataset:
@@ -82,7 +82,7 @@ def get_dataset(dataset_name, horizon, stride=1,
             state_std=state_std
         )
     
-    # Get dimensions from sample - 配对数据集返回的格式是 [2, horizon, state_dim]
+    # Get dimensions from sample
     sample = policy_dataset[0]
     state_dim = sample['obs']['state'].shape[-1]
     action_dim = sample['act'].shape[-1]
@@ -101,10 +101,7 @@ def create_data_loaders_from_dataset(
     batch_size, 
     train_task_ids=None, 
     test_task_ids=None):
-    """
-    Create train/test data loaders.
-    只支持通过train_task_ids和test_task_ids分别指定训练和测试的task id集合。
-    """
+    """Create train/test data loaders from train_task_ids and test_task_ids."""
     print(f"Policy dataset length: {len(policy_dataset)}")
 
     if train_task_ids is None or test_task_ids is None:
